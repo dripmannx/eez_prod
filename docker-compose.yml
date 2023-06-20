@@ -1,0 +1,115 @@
+version: '3.6'
+ 
+services:
+  registry:
+    container_name: eez-registry
+    image: registry:2
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+ 
+  gitea:
+    container_name: gitea
+    image: gitea/gitea:1.13
+    restart: unless-stopped
+    environment:
+      # https://docs.gitea.io/en-us/install-with-docker/#environments-variables
+      - APP_NAME="Gitea"
+      - USER_UID=1000
+      - USER_GID=1000
+      - RUN_MODE=prod
+      - DOMAIN=192.168.178.101
+      - SSH_DOMAIN=192.168.178.101
+      - HTTP_PORT=3000
+      - ROOT_URL=http://192.168.178.101:3000
+      - SSH_PORT=2222
+      - SSH_LISTEN_PORT=22
+      - DB_TYPE=sqlite3
+    ports:
+      - "3000:3000"
+      - "2222:22"
+    networks:
+      - cicd_net
+    volumes:
+      - ./gitea:/data
+ 
+  drone:
+    container_name: drone
+    #image: drone/drone:1.6.4
+    image: drone/drone:2.16
+    restart: unless-stopped
+    depends_on:
+      - gitea
+    environment:
+      # https://docs.drone.io/server/provider/gitea/
+      - DRONE_DATABASE_DRIVER=sqlite3
+      - DRONE_DATABASE_DATASOURCE=/data/database.sqlite
+      - DRONE_GITEA_SERVER=http://192.168.178.101:3000/
+      - DRONE_GIT_ALWAYS_AUTH=false
+      - DRONE_RPC_SECRET=${DRONE_RPC_SECRET}
+      - DRONE_SERVER_PROTO=http
+      - DRONE_SERVER_HOST=192.168.178.101:3001
+      - DRONE_TLS_AUTOCERT=false
+      - DRONE_USER_CREATE=${DRONE_USER_CREATE}
+      - DRONE_GITEA_CLIENT_ID=${DRONE_GITEA_CLIENT_ID}
+      - DRONE_GITEA_CLIENT_SECRET=${DRONE_GITEA_CLIENT_SECRET}
+    ports:
+      - "3001:80"
+      - "9001:9000"
+    networks:
+      - cicd_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./drone:/data
+      - ../EEZ_WebApp/:/drone/src/EEZ_WebApp/
+ 
+  drone-runner:
+    container_name: drone-runner
+    image: drone/drone-runner-docker:1.6.3
+    restart: unless-stopped
+    depends_on:
+      - drone
+    environment:
+      - DRONE_RPC_PROTO=http
+      - DRONE_RPC_HOST=drone
+      - DRONE_RPC_SECRET=${DRONE_RPC_SECRET}
+      - DRONE_RUNNER_NAME="${HOSTNAME}-runner"
+     # - DRONE_RUNNER_CAPACITY=2
+      - DRONE_RUNNER_NETWORKS=cicd_net
+      - DRONE_DEBUG=false
+      - DRONE_TRACE=false
+    ports:
+      - "3002:80"
+    networks:
+      - cicd_net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+ 
+  selenium-hub:
+    image: 192.168.178.101:5000/selenium-hub:latest
+    container_name: selenium-hub
+    restart: unless-stopped
+    ports:
+      - "4442:4442"
+      - "4443:4443"
+      - "4444:4444"
+    networks:
+      - cicd_net
+ 
+  firefox:
+    container_name: firefox-node
+    image: 192.168.178.101:5000/node-firefox:latest
+    restart: unless-stopped
+    shm_size: 2gb
+    environment:
+      - SCREEN_WIDTH=1920
+      - SCREEN_HEIGHT=1920
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    networks:
+      - cicd_net
+ 
+networks:
+  cicd_net:
+    name: cicd_net
