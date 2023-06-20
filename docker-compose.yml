@@ -18,10 +18,10 @@ services:
       - USER_UID=1000
       - USER_GID=1000
       - RUN_MODE=prod
-      - DOMAIN=192.168.1.59
-      - SSH_DOMAIN=192.168.1.59
+      - DOMAIN=192.168.178.101
+      - SSH_DOMAIN=192.168.178.101
       - HTTP_PORT=3000
-      - ROOT_URL=http://192.168.1.59:3000
+      - ROOT_URL=http://192.168.178.101:3000
       - SSH_PORT=2222
       - SSH_LISTEN_PORT=22
       - DB_TYPE=sqlite3
@@ -44,11 +44,11 @@ services:
       # https://docs.drone.io/server/provider/gitea/
       - DRONE_DATABASE_DRIVER=sqlite3
       - DRONE_DATABASE_DATASOURCE=/data/database.sqlite
-      - DRONE_GITEA_SERVER=http://192.168.1.59:3000/
+      - DRONE_GITEA_SERVER=http://192.168.178.101:3000/
       - DRONE_GIT_ALWAYS_AUTH=false
       - DRONE_RPC_SECRET=${DRONE_RPC_SECRET}
       - DRONE_SERVER_PROTO=http
-      - DRONE_SERVER_HOST=192.168.1.59:3001
+      - DRONE_SERVER_HOST=192.168.178.101:3001
       - DRONE_TLS_AUTOCERT=false
       - DRONE_USER_CREATE=${DRONE_USER_CREATE}
       - DRONE_GITEA_CLIENT_ID=${DRONE_GITEA_CLIENT_ID}
@@ -86,7 +86,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
  
   selenium-hub:
-    image: 192.168.1.59:5000/selenium-hub:latest
+    image: 192.168.178.101:5000/selenium-hub:latest
     container_name: selenium-hub
     restart: unless-stopped
     ports:
@@ -98,7 +98,7 @@ services:
  
   firefox:
     container_name: firefox-node
-    image: 192.168.1.59:5000/node-firefox:latest
+    image: 192.168.178.101:5000/node-firefox:latest
     restart: unless-stopped
     shm_size: 2gb
     environment:
