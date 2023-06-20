@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 export HOSTNAME=$(hostname)
-export IP_ADDRESS=192.168.178.101
+export IP_ADDRESS=192.168.3.244
 export GITEA_ADMIN_USER="Luis"
 export DRONE_RPC_SECRET="$(echo ${HOSTNAME} | openssl dgst -md5 -hex)"
 export DRONE_USER_CREATE="username:${GITEA_ADMIN_USER},machine:false,admin:true,token:${DRONE_RPC_SECRET}"
